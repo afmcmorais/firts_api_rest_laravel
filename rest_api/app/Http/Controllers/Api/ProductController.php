@@ -21,9 +21,12 @@ class ProductController extends Controller
         return response()->json($this->product->paginate(10));
     }
 
-    public function show(Product $id)
+    public function show($id)
     {
-        $data = ['data' => $id];
+        if(!$product = $this->product->find($id)){
+            return response()->json(ApiError::errorMessage('Product not found', 4040), 404);
+        }
+        $data = ['data' => $this->product->find($id)];
         return response()->json($data);
     }
 
@@ -38,9 +41,39 @@ class ProductController extends Controller
 
         } catch (\Exception $e) {
             if(config('app.debug')) {
-                return response()->json(ApiError::errorMessage($e->getMessage(), 1010));
+                return response()->json(ApiError::errorMessage($e->getMessage(), 1010), 500);
             }
-            return response()->json(ApiError::errorMessage('Error while creating product', 1010));
+            return response()->json(ApiError::errorMessage('Error while creating product', 1010), 500);
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        try {
+            $productData = $request->all();
+            $this->product->find($id)->update($productData);
+
+            $return = ['data' => ['message' => 'Product updated successfully']];
+            return response()->json($return, 201);
+
+        } catch (\Exception $e) {
+            if(config('app.debug')) {
+                return response()->json(ApiError::errorMessage($e->getMessage(), 1011), 500);
+            }
+            return response()->json(ApiError::errorMessage('Error while updating product', 1011), 500);
+        }
+    }
+
+    public function delete(Product $id)
+    {
+        try {
+            $id->delete();
+            return response()->json(['data' => ['message' => 'Product deleted successfully']], 200);
+        } catch (\Exception $e) {
+            if(config('app.debug')) {
+                return response()->json(ApiError::errorMessage($e->getMessage(), 1012), 500);
+            }
+            return response()->json(ApiError::errorMessage('Error while deleting product', 1012), 500);
         }
     }
 }
